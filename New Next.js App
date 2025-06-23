@@ -1,0 +1,3 @@
+npx create-next-app@latest vettriageai --typescript
+cd vettriageai
+npm install @supabase/supabase-js
