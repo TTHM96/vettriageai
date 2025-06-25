@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "vettriageai/utils/supabaseClient";
+import { supabase } from "../utils/supabaseClient";
 
 export default function Home() {
   const [cases, setCases] = useState<any[]>([]);
