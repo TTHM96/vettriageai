@@ -1,26 +1,25 @@
-import { useState } from 'react'
+import { useEffect, useState } from "react";
+import { supabase } from "../utils/supabaseClient";
 
 export default function Home() {
-  const [input, setInput] = useState('')
-  const [result, setResult] = useState('')
-
-  const handleSearch = async () => {
-    setResult('You entered: ' + input)
-  }
-
+  const [cases, setCases] = useState<any[]>([]);
+  useEffect(() => {
+    const fetchCases = async () => {
+      let { data, error } = await supabase.from('cases').select('*');
+      if (!error) setCases(data || []);
+    };
+    fetchCases();
+  }, []);
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>VetTriageAI</h1>
-      <textarea
-        rows={5}
-        cols={60}
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder="Enter pet symptoms..."
-      />
-      <br />
-      <button onClick={handleSearch}>Submit</button>
-      <pre style={{ whiteSpace: 'pre-wrap' }}>{result}</pre>
-    </div>
-  )
+    <main>
+      <h1>VetTriageAI Case List</h1>
+      <ul>
+        {cases.map((item, i) => (
+          <li key={i}>
+            <strong>Category:</strong> {item.category} | <strong>Species:</strong> {item.species} | <strong>Symptoms:</strong> {item.symptoms} | <strong>Triage:</strong> {item.triage_level} | <strong>Recommendation:</strong> {item.recommendation}
+          </li>
+        ))}
+      </ul>
+    </main>
+  );
 }
