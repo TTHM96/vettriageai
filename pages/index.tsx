@@ -1,9 +1,39 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../utils/supabaseClient";
 
+// --- TYPES ---
+type CaseType = {
+  id: number;
+  created_at?: string;
+  category?: string;
+  species?: string;
+  symptoms?: string;
+  triage_level?: string;
+  recommendation?: string;
+  // add other fields as needed
+};
+
+type IntoxType = {
+  id: number;
+  created_at?: string;
+  name?: string;
+  species?: string;
+  toxin?: string;
+  symptoms?: string;
+  treatment?: string;
+  prognosis?: string;
+  // add other fields as needed
+};
+
 const PAGE_SIZE = 10;
 
-function SearchBar({ value, onChange, placeholder }) {
+// --- COMPONENTS ---
+interface SearchBarProps {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}
+function SearchBar({ value, onChange, placeholder }: SearchBarProps) {
   return (
     <input
       style={{
@@ -22,7 +52,12 @@ function SearchBar({ value, onChange, placeholder }) {
   );
 }
 
-function Pagination({ page, totalPages, setPage }) {
+interface PaginationProps {
+  page: number;
+  totalPages: number;
+  setPage: (p: number) => void;
+}
+function Pagination({ page, totalPages, setPage }: PaginationProps) {
   return (
     <div style={{ margin: "18px 0" }}>
       <button
@@ -60,7 +95,11 @@ function Pagination({ page, totalPages, setPage }) {
   );
 }
 
-function FancyTable({ data, columns }) {
+interface FancyTableProps<T> {
+  data: T[];
+  columns: { key: keyof T; label: string }[];
+}
+function FancyTable<T extends { id?: number } = any>({ data, columns }: FancyTableProps<T>) {
   return (
     <div style={{ overflowX: "auto" }}>
       <table
@@ -75,7 +114,7 @@ function FancyTable({ data, columns }) {
           <tr>
             {columns.map(col => (
               <th
-                key={col.key}
+                key={String(col.key)}
                 style={{
                   borderBottom: "2px solid #ccc",
                   padding: "12px 8px",
@@ -99,8 +138,8 @@ function FancyTable({ data, columns }) {
             data.map((row, idx) => (
               <tr key={row.id || idx}>
                 {columns.map(col => (
-                  <td key={col.key} style={{ padding: "10px 8px", borderBottom: "1px solid #eee", fontSize: "15px" }}>
-                    {row[col.key] || "-"}
+                  <td key={String(col.key)} style={{ padding: "10px 8px", borderBottom: "1px solid #eee", fontSize: "15px" }}>
+                    {row[col.key] ? String(row[col.key]) : "-"}
                   </td>
                 ))}
               </tr>
@@ -112,14 +151,15 @@ function FancyTable({ data, columns }) {
   );
 }
 
+// --- MAIN PAGE ---
 export default function Home() {
-  // State for Cases
-  const [cases, setCases] = useState<any[]>([]);
+  // Cases
+  const [cases, setCases] = useState<CaseType[]>([]);
   const [casesSearch, setCasesSearch] = useState("");
   const [casesPage, setCasesPage] = useState(1);
 
-  // State for Intoxications
-  const [intox, setIntox] = useState<any[]>([]);
+  // Intoxications
+  const [intox, setIntox] = useState<IntoxType[]>([]);
   const [intoxSearch, setIntoxSearch] = useState("");
   const [intoxPage, setIntoxPage] = useState(1);
 
@@ -137,24 +177,24 @@ export default function Home() {
     });
   }, []);
 
-  // SEARCH + PAGINATION logic for Cases
+  // Cases: filter & paginate
   const filteredCases = cases.filter(item =>
     Object.values(item)
       .join(" ")
       .toLowerCase()
       .includes(casesSearch.toLowerCase())
   );
-  const casesTotalPages = Math.ceil(filteredCases.length / PAGE_SIZE);
+  const casesTotalPages = Math.max(1, Math.ceil(filteredCases.length / PAGE_SIZE));
   const displayedCases = filteredCases.slice((casesPage - 1) * PAGE_SIZE, casesPage * PAGE_SIZE);
 
-  // SEARCH + PAGINATION logic for Intoxications
+  // Intoxications: filter & paginate
   const filteredIntox = intox.filter(item =>
     Object.values(item)
       .join(" ")
       .toLowerCase()
       .includes(intoxSearch.toLowerCase())
   );
-  const intoxTotalPages = Math.ceil(filteredIntox.length / PAGE_SIZE);
+  const intoxTotalPages = Math.max(1, Math.ceil(filteredIntox.length / PAGE_SIZE));
   const displayedIntox = filteredIntox.slice((intoxPage - 1) * PAGE_SIZE, intoxPage * PAGE_SIZE);
 
   return (
@@ -167,7 +207,7 @@ export default function Home() {
           {/* CASES */}
           <h2 style={{ marginTop: 34 }}>Cases</h2>
           <SearchBar value={casesSearch} onChange={v => { setCasesSearch(v); setCasesPage(1); }} placeholder="Search cases..." />
-          <FancyTable
+          <FancyTable<CaseType>
             data={displayedCases}
             columns={[
               { key: "id", label: "ID" },
@@ -179,12 +219,12 @@ export default function Home() {
               { key: "recommendation", label: "Recommendation" }
             ]}
           />
-          <Pagination page={casesPage} totalPages={casesTotalPages || 1} setPage={setCasesPage} />
+          <Pagination page={casesPage} totalPages={casesTotalPages} setPage={setCasesPage} />
 
           {/* INTOXICATIONS */}
           <h2 style={{ marginTop: 48 }}>Intoxications</h2>
           <SearchBar value={intoxSearch} onChange={v => { setIntoxSearch(v); setIntoxPage(1); }} placeholder="Search intoxications..." />
-          <FancyTable
+          <FancyTable<IntoxType>
             data={displayedIntox}
             columns={[
               { key: "id", label: "ID" },
@@ -197,7 +237,7 @@ export default function Home() {
               { key: "prognosis", label: "Prognosis" }
             ]}
           />
-          <Pagination page={intoxPage} totalPages={intoxTotalPages || 1} setPage={setIntoxPage} />
+          <Pagination page={intoxPage} totalPages={intoxTotalPages} setPage={setIntoxPage} />
         </>
       )}
     </div>
