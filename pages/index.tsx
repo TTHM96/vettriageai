@@ -10,7 +10,6 @@ type CaseType = {
   symptoms?: string;
   triage_level?: string;
   recommendation?: string;
-  // add other fields as needed
 };
 
 type IntoxType = {
@@ -22,7 +21,6 @@ type IntoxType = {
   symptoms?: string;
   treatment?: string;
   prognosis?: string;
-  // add other fields as needed
 };
 
 const PAGE_SIZE = 10;
