@@ -11,24 +11,18 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-
-      // Fetch from Cases table
       const { data: casesData, error: casesError } = await supabase
         .from("Cases")
         .select("*");
       setCasesError(casesError);
       if (!casesError) setCases(casesData || []);
-
-      // Fetch from Intoxications table
       const { data: intoxData, error: intoxError } = await supabase
         .from("Intoxications")
         .select("*");
       setIntoxError(intoxError);
       if (!intoxError) setIntoxications(intoxData || []);
-
       setLoading(false);
     };
-
     fetchData();
   }, []);
 
@@ -41,16 +35,35 @@ export default function Home() {
         <>
           <h2>Cases</h2>
           {casesError && (
-            <div style={{ color: "red" }}>
-              Cases Error: {casesError.message}
-            </div>
+            <div style={{ color: "red" }}>Cases Error: {casesError.message}</div>
           )}
           {cases.length ? (
-            <ul>
-              {cases.map((item, idx) => (
-                <li key={idx}>{JSON.stringify(item)}</li>
-              ))}
-            </ul>
+            <table border="1" cellPadding={5}>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Created At</th>
+                  <th>Category</th>
+                  <th>Species</th>
+                  <th>Symptoms</th>
+                  <th>Triage Level</th>
+                  <th>Recommendation</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cases.map((item, idx) => (
+                  <tr key={item.id || idx}>
+                    <td>{item.id}</td>
+                    <td>{item.created_at}</td>
+                    <td>{item.category}</td>
+                    <td>{item.species}</td>
+                    <td>{item.symptoms}</td>
+                    <td>{item.triage_level}</td>
+                    <td>{item.recommendation}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : (
             <p>No cases found.</p>
           )}
@@ -64,7 +77,7 @@ export default function Home() {
           {intoxications.length ? (
             <ul>
               {intoxications.map((item, idx) => (
-                <li key={idx}>{JSON.stringify(item)}</li>
+                <li key={item.id || idx}>{JSON.stringify(item)}</li>
               ))}
             </ul>
           ) : (
