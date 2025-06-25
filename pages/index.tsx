@@ -1,10 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, ChangeEvent } from "react";
 import { supabase } from "../utils/supabaseClient";
 
-// --- TYPES ---
 type CaseType = {
   id: number;
-  created_at?: string;
   category?: string;
   species?: string;
   symptoms?: string;
@@ -30,217 +28,249 @@ type IntoxType = {
 
 const PAGE_SIZE = 10;
 
-// --- COMPONENTS ---
-interface SearchBarProps {
+function SearchBar({
+  value,
+  onChange,
+  placeholder,
+}: {
   value: string;
-  onChange: (v: string) => void;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
-}
-function SearchBar({ value, onChange, placeholder }: SearchBarProps) {
+}) {
   return (
     <input
       style={{
-        padding: "8px",
-        margin: "8px 0 20px 0",
-        borderRadius: "6px",
+        marginBottom: 20,
+        padding: 8,
+        width: 320,
+        fontSize: 16,
+        borderRadius: 6,
         border: "1px solid #bbb",
-        width: "350px",
-        fontSize: "16px"
       }}
       type="text"
       value={value}
-      onChange={e => onChange(e.target.value)}
-      placeholder={placeholder}
+      onChange={onChange}
+      placeholder={placeholder || "Search..."}
     />
   );
 }
 
-interface PaginationProps {
-  page: number;
-  totalPages: number;
-  setPage: (p: number) => void;
-}
-function Pagination({ page, totalPages, setPage }: PaginationProps) {
-  return (
-    <div style={{ margin: "18px 0" }}>
-      <button
-        style={{
-          marginRight: "12px",
-          padding: "6px 16px",
-          borderRadius: "4px",
-          border: "1px solid #bbb",
-          background: page === 1 ? "#eee" : "#fff",
-          cursor: page === 1 ? "not-allowed" : "pointer"
-        }}
-        onClick={() => setPage(page - 1)}
-        disabled={page === 1}
-      >
-        Prev
-      </button>
-      <span style={{ fontWeight: "bold" }}>
-        Page {page} of {totalPages}
-      </span>
-      <button
-        style={{
-          marginLeft: "12px",
-          padding: "6px 16px",
-          borderRadius: "4px",
-          border: "1px solid #bbb",
-          background: page === totalPages ? "#eee" : "#fff",
-          cursor: page === totalPages ? "not-allowed" : "pointer"
-        }}
-        onClick={() => setPage(page + 1)}
-        disabled={page === totalPages}
-      >
-        Next
-      </button>
-    </div>
-  );
-}
-
-interface FancyTableProps<T> {
-  data: T[];
-  columns: { key: keyof T; label: string }[];
-}
-function FancyTable<T extends { id?: number } = any>({ data, columns }: FancyTableProps<T>) {
-  return (
-    <div style={{ overflowX: "auto" }}>
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          background: "#fafbfc",
-          marginTop: 10
-        }}
-      >
-        <thead>
-          <tr>
-            {columns.map(col => (
-              <th
-                key={String(col.key)}
-                style={{
-                  borderBottom: "2px solid #ccc",
-                  padding: "12px 8px",
-                  background: "#f2f2f2",
-                  textAlign: "left"
-                }}
-              >
-                {col.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.length === 0 ? (
-            <tr>
-              <td colSpan={columns.length} style={{ textAlign: "center" }}>
-                No data found.
-              </td>
-            </tr>
-          ) : (
-            data.map((row, idx) => (
-              <tr key={row.id || idx}>
-                {columns.map(col => (
-                  <td key={String(col.key)} style={{ padding: "10px 8px", borderBottom: "1px solid #eee", fontSize: "15px" }}>
-                    {row[col.key] ? String(row[col.key]) : "-"}
-                  </td>
-                ))}
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-// --- MAIN PAGE ---
 export default function Home() {
-  // Cases
   const [cases, setCases] = useState<CaseType[]>([]);
-  const [casesSearch, setCasesSearch] = useState("");
-  const [casesPage, setCasesPage] = useState(1);
-
-  // Intoxications
-  const [intox, setIntox] = useState<IntoxType[]>([]);
-  const [intoxSearch, setIntoxSearch] = useState("");
-  const [intoxPage, setIntoxPage] = useState(1);
-
+  const [intoxications, setIntoxications] = useState<IntoxType[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Pagination and search state
+  const [casePage, setCasePage] = useState(1);
+  const [intoxPage, setIntoxPage] = useState(1);
+  const [caseSearch, setCaseSearch] = useState("");
+  const [intoxSearch, setIntoxSearch] = useState("");
+
   useEffect(() => {
-    setLoading(true);
-    Promise.all([
-      supabase.from("Cases").select("*"),
-      supabase.from("Intoxications").select("*")
-    ]).then(([casesRes, intoxRes]) => {
-      setCases(casesRes.data || []);
-      setIntox(intoxRes.data || []);
+    const fetchData = async () => {
+      setLoading(true);
+
+      const { data: casesData, error: casesError } = await supabase
+        .from("Cases")
+        .select("*");
+      if (casesError) console.error("Cases error:", casesError);
+
+      const { data: intoxData, error: intoxError } = await supabase
+        .from("Intoxications")
+        .select("*");
+      if (intoxError) console.error("Intoxications error:", intoxError);
+
+      setCases(casesData || []);
+      setIntoxications(intoxData || []);
       setLoading(false);
-    });
+    };
+
+    fetchData();
   }, []);
 
-  // Cases: filter & paginate
-  const filteredCases = cases.filter(item =>
-    Object.values(item)
-      .join(" ")
-      .toLowerCase()
-      .includes(casesSearch.toLowerCase())
+  // Search and pagination filtering
+  const filteredCases = cases.filter(
+    (c) =>
+      !caseSearch ||
+      Object.values(c)
+        .join(" ")
+        .toLowerCase()
+        .includes(caseSearch.toLowerCase())
   );
-  const casesTotalPages = Math.max(1, Math.ceil(filteredCases.length / PAGE_SIZE));
-  const displayedCases = filteredCases.slice((casesPage - 1) * PAGE_SIZE, casesPage * PAGE_SIZE);
+  const paginatedCases = filteredCases.slice(
+    (casePage - 1) * PAGE_SIZE,
+    casePage * PAGE_SIZE
+  );
+  const totalCasePages = Math.ceil(filteredCases.length / PAGE_SIZE);
 
-  // Intoxications: filter & paginate
-  const filteredIntox = intox.filter(item =>
-    Object.values(item)
-      .join(" ")
-      .toLowerCase()
-      .includes(intoxSearch.toLowerCase())
+  const filteredIntox = intoxications.filter(
+    (i) =>
+      !intoxSearch ||
+      Object.values(i)
+        .join(" ")
+        .toLowerCase()
+        .includes(intoxSearch.toLowerCase())
   );
-  const intoxTotalPages = Math.max(1, Math.ceil(filteredIntox.length / PAGE_SIZE));
-  const displayedIntox = filteredIntox.slice((intoxPage - 1) * PAGE_SIZE, intoxPage * PAGE_SIZE);
+  const paginatedIntox = filteredIntox.slice(
+    (intoxPage - 1) * PAGE_SIZE,
+    intoxPage * PAGE_SIZE
+  );
+  const totalIntoxPages = Math.ceil(filteredIntox.length / PAGE_SIZE);
 
   return (
-    <div style={{ padding: 32, fontFamily: "Segoe UI, sans-serif", background: "#fff" }}>
-      <h1 style={{ fontSize: 36, fontWeight: 800, marginBottom: 12 }}>VetTriageAI Data</h1>
+    <div style={{ padding: 32, fontFamily: "sans-serif" }}>
+      <h1 style={{ fontSize: 40, marginBottom: 32 }}>VetTriageAI Data</h1>
       {loading ? (
         <p>Loading...</p>
       ) : (
         <>
           {/* CASES */}
-          <h2 style={{ marginTop: 34 }}>Cases</h2>
-          <SearchBar value={casesSearch} onChange={v => { setCasesSearch(v); setCasesPage(1); }} placeholder="Search cases..." />
-          <FancyTable<CaseType>
-            data={displayedCases}
-            columns={[
-              { key: "id", label: "ID" },
-              { key: "created_at", label: "Created At" },
-              { key: "category", label: "Category" },
-              { key: "species", label: "Species" },
-              { key: "symptoms", label: "Symptoms" },
-              { key: "triage_level", label: "Triage Level" },
-              { key: "recommendation", label: "Recommendation" }
-            ]}
-          />
-          <Pagination page={casesPage} totalPages={casesTotalPages} setPage={setCasesPage} />
+          <section style={{ marginBottom: 60 }}>
+            <h2 style={{ fontSize: 32 }}>Cases</h2>
+            <SearchBar
+              value={caseSearch}
+              onChange={(e) => {
+                setCaseSearch(e.target.value);
+                setCasePage(1);
+              }}
+              placeholder="Search all cases"
+            />
+            {paginatedCases.length ? (
+              <>
+                <table
+                  style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    marginBottom: 16,
+                  }}
+                >
+                  <thead>
+                    <tr style={{ background: "#f4f4f4" }}>
+                      <th>ID</th>
+                      <th>Category</th>
+                      <th>Species</th>
+                      <th>Symptoms</th>
+                      <th>Triage Level</th>
+                      <th>Recommendation</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedCases.map((c) => (
+                      <tr key={c.id}>
+                        <td style={{ border: "1px solid #ddd", padding: 8 }}>{c.id}</td>
+                        <td style={{ border: "1px solid #ddd", padding: 8 }}>{c.category}</td>
+                        <td style={{ border: "1px solid #ddd", padding: 8 }}>{c.species}</td>
+                        <td style={{ border: "1px solid #ddd", padding: 8 }}>{c.symptoms}</td>
+                        <td style={{ border: "1px solid #ddd", padding: 8 }}>{c.triage_level}</td>
+                        <td style={{ border: "1px solid #ddd", padding: 8 }}>{c.recommendation}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {/* Pagination */}
+                <div style={{ marginBottom: 20 }}>
+                  <button
+                    disabled={casePage === 1}
+                    onClick={() => setCasePage((p) => Math.max(1, p - 1))}
+                  >
+                    Prev
+                  </button>
+                  <span style={{ margin: "0 10px" }}>
+                    Page {casePage} / {totalCasePages}
+                  </span>
+                  <button
+                    disabled={casePage === totalCasePages}
+                    onClick={() => setCasePage((p) => Math.min(totalCasePages, p + 1))}
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p>No cases found.</p>
+            )}
+          </section>
 
           {/* INTOXICATIONS */}
-          <h2 style={{ marginTop: 48 }}>Intoxications</h2>
-          <SearchBar value={intoxSearch} onChange={v => { setIntoxSearch(v); setIntoxPage(1); }} placeholder="Search intoxications..." />
-          <FancyTable<IntoxType>
-            data={displayedIntox}
-            columns={[
-              { key: "id", label: "ID" },
-              { key: "created_at", label: "Created At" },
-              { key: "name", label: "Name" },
-              { key: "species", label: "Species" },
-              { key: "toxin", label: "Toxin" },
-              { key: "symptoms", label: "Symptoms" },
-              { key: "treatment", label: "Treatment" },
-              { key: "prognosis", label: "Prognosis" }
-            ]}
-          />
-          <Pagination page={intoxPage} totalPages={intoxTotalPages} setPage={setIntoxPage} />
+          <section>
+            <h2 style={{ fontSize: 32 }}>Intoxications</h2>
+            <SearchBar
+              value={intoxSearch}
+              onChange={(e) => {
+                setIntoxSearch(e.target.value);
+                setIntoxPage(1);
+              }}
+              placeholder="Search all intoxications"
+            />
+            {paginatedIntox.length ? (
+              <>
+                <table
+                  style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    marginBottom: 16,
+                  }}
+                >
+                  <thead>
+                    <tr style={{ background: "#f4f4f4" }}>
+                      <th>ID</th>
+                      <th>Created</th>
+                      <th>Species</th>
+                      <th>Breed</th>
+                      <th>Weight (kg)</th>
+                      <th>Toxin</th>
+                      <th>Type</th>
+                      <th>Amount Ingested</th>
+                      <th>mg/kg</th>
+                      <th>Clinical Threshold</th>
+                      <th>Symptoms</th>
+                      <th>Triage Level</th>
+                      <th>Recommendation</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedIntox.map((i) => (
+                      <tr key={i.id}>
+                        <td style={{ border: "1px solid #ddd", padding: 8 }}>{i.id}</td>
+                        <td style={{ border: "1px solid #ddd", padding: 8 }}>{i.created_at}</td>
+                        <td style={{ border: "1px solid #ddd", padding: 8 }}>{i.species}</td>
+                        <td style={{ border: "1px solid #ddd", padding: 8 }}>{i.example_breed}</td>
+                        <td style={{ border: "1px solid #ddd", padding: 8 }}>{i.weight_kg}</td>
+                        <td style={{ border: "1px solid #ddd", padding: 8 }}>{i.toxin}</td>
+                        <td style={{ border: "1px solid #ddd", padding: 8 }}>{i.type}</td>
+                        <td style={{ border: "1px solid #ddd", padding: 8 }}>{i.amount_ingested}</td>
+                        <td style={{ border: "1px solid #ddd", padding: 8 }}>{i.mg_per_kg}</td>
+                        <td style={{ border: "1px solid #ddd", padding: 8 }}>{i.clinical_threshold}</td>
+                        <td style={{ border: "1px solid #ddd", padding: 8 }}>{i.symptoms}</td>
+                        <td style={{ border: "1px solid #ddd", padding: 8 }}>{i.triage_level}</td>
+                        <td style={{ border: "1px solid #ddd", padding: 8 }}>{i.recommendation}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {/* Pagination */}
+                <div>
+                  <button
+                    disabled={intoxPage === 1}
+                    onClick={() => setIntoxPage((p) => Math.max(1, p - 1))}
+                  >
+                    Prev
+                  </button>
+                  <span style={{ margin: "0 10px" }}>
+                    Page {intoxPage} / {totalIntoxPages}
+                  </span>
+                  <button
+                    disabled={intoxPage === totalIntoxPages}
+                    onClick={() => setIntoxPage((p) => Math.min(totalIntoxPages, p + 1))}
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p>No intoxications found.</p>
+            )}
+          </section>
         </>
       )}
     </div>
