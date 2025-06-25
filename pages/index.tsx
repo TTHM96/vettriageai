@@ -11,16 +11,21 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+
+      // Fetch Cases
       const { data: casesData, error: casesError } = await supabase
         .from("Cases")
         .select("*");
       setCasesError(casesError);
       if (!casesError) setCases(casesData || []);
+
+      // Fetch Intoxications
       const { data: intoxData, error: intoxError } = await supabase
         .from("Intoxications")
         .select("*");
       setIntoxError(intoxError);
       if (!intoxError) setIntoxications(intoxData || []);
+
       setLoading(false);
     };
     fetchData();
@@ -33,6 +38,7 @@ export default function Home() {
         <p>Loading...</p>
       ) : (
         <>
+          {/* CASES TABLE */}
           <h2>Cases</h2>
           {casesError && (
             <div style={{ color: "red" }}>Cases Error: {casesError.message}</div>
@@ -68,6 +74,7 @@ export default function Home() {
             <p>No cases found.</p>
           )}
 
+          {/* INTOXICATIONS TABLE */}
           <h2>Intoxications</h2>
           {intoxError && (
             <div style={{ color: "red" }}>
@@ -75,11 +82,34 @@ export default function Home() {
             </div>
           )}
           {intoxications.length ? (
-            <ul>
-              {intoxications.map((item, idx) => (
-                <li key={item.id || idx}>{JSON.stringify(item)}</li>
-              ))}
-            </ul>
+            <table border="1" cellPadding={5}>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Created At</th>
+                  <th>Name</th>
+                  <th>Species</th>
+                  <th>Toxin</th>
+                  <th>Symptoms</th>
+                  <th>Treatment</th>
+                  <th>Prognosis</th>
+                </tr>
+              </thead>
+              <tbody>
+                {intoxications.map((item, idx) => (
+                  <tr key={item.id || idx}>
+                    <td>{item.id}</td>
+                    <td>{item.created_at}</td>
+                    <td>{item.name}</td>
+                    <td>{item.species}</td>
+                    <td>{item.toxin}</td>
+                    <td>{item.symptoms}</td>
+                    <td>{item.treatment}</td>
+                    <td>{item.prognosis}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : (
             <p>No intoxications found.</p>
           )}
