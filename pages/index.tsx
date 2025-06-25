@@ -31,35 +31,34 @@ export default function Home() {
   }, []);
 
   return (
-    <div style={{ padding: 32 }}>
-      <h1>VetTriageAI Data</h1>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <>
-          <h2>Cases</h2>
-          {cases.length ? (
-            <ul>
-              {cases.map((item, idx) => (
-                <li key={idx}>{JSON.stringify(item)}</li>
-              ))}
-            </ul>
-          ) : (
-            <p>No cases found.</p>
-          )}
-
-          <h2>Intoxications</h2>
-          {intoxications.length ? (
-            <ul>
-              {intoxications.map((item, idx) => (
-                <li key={idx}>{JSON.stringify(item)}</li>
-              ))}
-            </ul>
-          ) : (
-            <p>No intoxications found.</p>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
+  <div style={{ padding: 32 }}>
+    <h1>VetTriageAI Data</h1>
+    {loading ? (
+      <p>Loading...</p>
+    ) : (
+      <>
+        {casesError && <div style={{color: "red"}}>Cases Error: {casesError.message}</div>}
+        <h2>Cases</h2>
+        {cases.length ? (
+          <ul>
+            {cases.map((item, idx) => (
+              <li key={idx}>{JSON.stringify(item)}</li>
+            ))}
+          </ul>
+        ) : (
+          <p>No cases found.</p>
+        )}
+        <h2>Intoxications</h2>
+        {intoxications.length ? (
+          <ul>
+            {intoxications.map((item, idx) => (
+              <li key={idx}>{JSON.stringify(item)}</li>
+            ))}
+          </ul>
+        ) : (
+          <p>No intoxications found.</p>
+        )}
+      </>
+    )}
+  </div>
+);
