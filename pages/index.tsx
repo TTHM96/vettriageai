@@ -15,12 +15,17 @@ type CaseType = {
 type IntoxType = {
   id: number;
   created_at?: string;
-  name?: string;
   species?: string;
+  example_breed?: string;
+  weight_kg?: string;
   toxin?: string;
+  type?: string;
+  amount_ingested?: string;
+  mg_per_kg?: string;
+  clinical_threshold?: string;
   symptoms?: string;
-  treatment?: string;
-  prognosis?: string;
+  triage_level?: string;
+  recommendation?: string;
 };
 
 const PAGE_SIZE = 10;
