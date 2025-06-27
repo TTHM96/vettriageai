@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-// Options for dropdowns
+// Options
 const speciesOptions = ["Dog", "Cat"];
 const genderOptions = ["FE", "ME", "FN", "MN"];
 const timeElapsedOptions = [
@@ -12,8 +12,6 @@ const timeElapsedOptions = [
   "more than 24-48 hours ago"
 ];
 
-const ADMIN_SECRET = "MTTH1996"; // Change as needed
-
 const initialForm = {
   species: "",
   breed: "",
@@ -23,30 +21,6 @@ const initialForm = {
   time_elapsed: ""
 };
 
-// DEMO admin data table for editing/viewing cases
-const demoCaseData = [
-  {
-    species: "Dog",
-    breed: "Labrador",
-    age: "3 years",
-    gender_and_neuter_status: "ME",
-    symptoms: "vomiting and lethargy",
-    time_elapsed: "<30 minutes ago",
-    triage_level: "emergency",
-    recommendation: "See a vet immediately."
-  },
-  {
-    species: "Cat",
-    breed: "DSH",
-    age: "7 years",
-    gender_and_neuter_status: "FN",
-    symptoms: "coughing",
-    time_elapsed: "1-2 hours ago",
-    triage_level: "stable",
-    recommendation: "Monitor at home. If worsens, see a vet."
-  }
-];
-
 export default function Home() {
   const [form, setForm] = useState(initialForm);
   const [step, setStep] = useState(1);
@@ -54,12 +28,6 @@ export default function Home() {
     triage_level: string;
     recommendation: string;
   }>(null);
-
-  // Backdoor admin panel state
-  const [adminMode, setAdminMode] = useState(false);
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [adminPassword, setAdminPassword] = useState("");
-  const [adminError, setAdminError] = useState("");
 
   function triage(form: typeof initialForm) {
     const EMERGENCY_SIGNS = [
@@ -71,12 +39,9 @@ export default function Home() {
       "vomiting", "diarrhea", "lethargy", "not eating", "weakness", "blood in urine", "shaking",
       "pale gums", "tremors"
     ];
-
     const text = [form.symptoms, form.time_elapsed].join(" ").toLowerCase();
-
     let triage_level = "stable";
     let recommendation = "Monitor at home. If symptoms worsen, see a vet within the week. Monitor for signs of deterioration including worsening vomiting or diarrhoea, lethargy, collapse, tremoring, shivering and pale mucous membranes.";
-
     if (EMERGENCY_SIGNS.some((kw) => text.includes(kw))) {
       triage_level = "emergency";
       recommendation = "Your pet may require urgent veterinary care. Go to a veterinary clinic immediately.";
@@ -113,30 +78,6 @@ export default function Home() {
     setResult(null);
   }
 
-  // Admin backdoor handlers
-  function handleAdminLogin() {
-    setShowAdminLogin(true);
-    setAdminError("");
-    setAdminPassword("");
-  }
-  function handleAdminAuth(e: React.FormEvent) {
-    e.preventDefault();
-    if (adminPassword === ADMIN_SECRET) {
-      setAdminMode(true);
-      setShowAdminLogin(false);
-      setAdminPassword("");
-      setAdminError("");
-    } else {
-      setAdminError("Incorrect password.");
-    }
-  }
-  function handleAdminLogout() {
-    setAdminMode(false);
-    setShowAdminLogin(false);
-    setAdminPassword("");
-    setAdminError("");
-  }
-
   return (
     <div style={{ maxWidth: 700, margin: "30px auto", padding: 16 }}>
       <h1 style={{ fontWeight: "bold", fontSize: 48, marginBottom: 32 }}>
@@ -144,7 +85,7 @@ export default function Home() {
       </h1>
 
       {/* MAIN USER FLOW */}
-      {!adminMode && step < 7 && (
+      {step < 7 && (
         <form onSubmit={handleNext}>
           {step === 1 && (
             <>
@@ -363,7 +304,7 @@ export default function Home() {
       )}
 
       {/* Show triage result and summary */}
-      {!adminMode && step === 7 && result && (
+      {step === 7 && result && (
         <div style={{ background: "#f9f9f9", borderRadius: 12, padding: 32 }}>
           <h2 style={{ fontSize: 34, fontWeight: "bold", marginBottom: 16 }}>
             Recommendation Summary
@@ -408,122 +349,6 @@ export default function Home() {
             }}
           >
             Return Home
-          </button>
-        </div>
-      )}
-
-      {/* ADMIN LOGIN LINK */}
-      {!adminMode && (
-        <div style={{ marginTop: 40, textAlign: "center" }}>
-          <button
-            onClick={handleAdminLogin}
-            style={{
-              fontSize: 14,
-              background: "#e6e6e6",
-              border: "none",
-              padding: "7px 20px",
-              borderRadius: 5,
-              cursor: "pointer",
-              color: "#333"
-            }}
-          >
-            Admin Login
-          </button>
-        </div>
-      )}
-
-      {/* ADMIN LOGIN MODAL */}
-      {showAdminLogin && !adminMode && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0, left: 0, width: "100vw", height: "100vh",
-            background: "rgba(0,0,0,0.22)",
-            zIndex: 999,
-            display: "flex", alignItems: "center", justifyContent: "center"
-          }}
-        >
-          <form
-            onSubmit={handleAdminAuth}
-            style={{
-              background: "#fff", padding: 36, borderRadius: 12,
-              boxShadow: "0 2px 24px #888", minWidth: 300
-            }}
-          >
-            <h3 style={{ fontWeight: "bold" }}>Admin Access</h3>
-            <input
-              type="password"
-              value={adminPassword}
-              placeholder="Enter admin passcode"
-              style={{ width: "100%", fontSize: 18, padding: 10, margin: "20px 0" }}
-              onChange={e => setAdminPassword(e.target.value)}
-            />
-            {adminError && (
-              <div style={{ color: "red", marginBottom: 8 }}>{adminError}</div>
-            )}
-            <div>
-              <button
-                style={{ padding: "8px 24px", fontSize: 18, marginRight: 8 }}
-                type="submit"
-              >
-                Login
-              </button>
-              <button
-                style={{ padding: "8px 24px", fontSize: 18 }}
-                type="button"
-                onClick={() => { setShowAdminLogin(false); setAdminPassword(""); setAdminError(""); }}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* ADMIN MODE (replace with actual CRUD Supabase table) */}
-      {adminMode && (
-        <div style={{ marginTop: 36, background: "#f4f4f4", borderRadius: 8, padding: 24 }}>
-          <h2 style={{ fontWeight: "bold", marginBottom: 18 }}>
-            ADMIN: Review Raw Case Data
-          </h2>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 16 }}>
-            <thead>
-              <tr>
-                <th>Species</th>
-                <th>Breed</th>
-                <th>Age</th>
-                <th>Gender/Status</th>
-                <th>Symptoms</th>
-                <th>Time Elapsed</th>
-                <th>Triage</th>
-                <th>Recommendation</th>
-              </tr>
-            </thead>
-            <tbody>
-              {demoCaseData.map((row, idx) => (
-                <tr key={idx}>
-                  <td>{row.species}</td>
-                  <td>{row.breed}</td>
-                  <td>{row.age}</td>
-                  <td>{row.gender_and_neuter_status}</td>
-                  <td>{row.symptoms}</td>
-                  <td>{row.time_elapsed}</td>
-                  <td>{row.triage_level}</td>
-                  <td>{row.recommendation}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <button
-            onClick={handleAdminLogout}
-            style={{
-              marginTop: 24,
-              background: "#222", color: "#fff",
-              fontSize: 18, padding: "9px 28px",
-              border: "none", borderRadius: 7, cursor: "pointer"
-            }}
-          >
-            Log Out
           </button>
         </div>
       )}
