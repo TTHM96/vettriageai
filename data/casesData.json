@@ -1,1 +1,25 @@
-
+[
+  {
+    "category": "Urinary emergency",
+    "species": "Cat",
+    "breed": "Any",
+    "age": "Any",
+    "gender_and_neuter_status": "Any",
+    "symptom_keywords": "straining to urinate;struggling to pee;can't pee;using litter tray a lot;crying in litter;trying to urinate but nothing comes out;many toilet trips;peeing small amounts;vocalizing in tray",
+    "time_elapsed": "<30 minutes ago",
+    "triage_level": "emergency",
+    "recommendation": "See a vet immediately. This may be life-threatening. Do not delay."
+  },
+  {
+    "category": "Vomiting",
+    "species": "Dog",
+    "breed": "Labrador",
+    "age": "3 years",
+    "gender_and_neuter_status": "ME",
+    "symptom_keywords": "vomiting;throwing up;bringing up food;sick;retching;puking",
+    "time_elapsed": "<30 minutes ago",
+    "triage_level": "urgent",
+    "recommendation": "Withhold food and water, monitor closely, see a vet urgently if persists or worsens. Monitor for signs: worsening vomiting, diarrhea, lethargy, collapse, tremoring, shivering, pale mucous membranes."
+  },
+  // ... Add 300+ rows, all with your new logic (including breed/age nuance, time ranges, emergency/urgent/stable, first-aid, monitor, etc.)
+]
