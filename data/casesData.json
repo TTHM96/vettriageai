@@ -21,5 +21,4 @@
     "triage_level": "urgent",
     "recommendation": "Withhold food and water, monitor closely, see a vet urgently if persists or worsens. Monitor for signs: worsening vomiting, diarrhea, lethargy, collapse, tremoring, shivering, pale mucous membranes."
   },
-  // ... Add 300+ rows, all with your new logic (including breed/age nuance, time ranges, emergency/urgent/stable, first-aid, monitor, etc.)
 ]
